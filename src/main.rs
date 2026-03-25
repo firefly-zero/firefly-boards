@@ -19,21 +19,15 @@ extern "C" fn update() {
     state.input.update();
     match state.input.get() {
         Input::Left => {
-            if let Some(pages) = &state.pages {
-                if state.page > 0 {
-                    state.page -= 1;
-                } else {
-                    state.page = pages.len() - 1;
-                }
+            if state.page > 0 {
+                state.page -= 1;
             }
         }
         Input::Right | Input::Select => {
-            if let Some(pages) = &state.pages {
-                if state.page < pages.len() - 1 {
-                    state.page += 1;
-                } else {
-                    state.page = 0;
-                }
+            if let Some(pages) = &state.pages
+                && state.page < pages.len() - 1
+            {
+                state.page += 1;
             }
         }
         Input::Back => quit(),
@@ -53,7 +47,10 @@ extern "C" fn render() {
     let page = &pages[state.page];
     let pressed = state.input.pressed();
     firefly_ui::draw_title(&page.name, pressed, &font, theme.accent);
-    draw_title_arrows(&theme, pressed);
+
+    let has_left = state.page > 0;
+    let has_right = state.page + 1 < pages.len();
+    draw_title_arrows(&theme, pressed, has_left, has_right);
 
     for (score, i) in page.scores.iter().zip(2..) {
         let color = if score.me {
@@ -69,7 +66,7 @@ extern "C" fn render() {
     }
 }
 
-fn draw_title_arrows(theme: &Theme, pressed: bool) {
+fn draw_title_arrows(theme: &Theme, pressed: bool, has_left: bool, has_right: bool) {
     const BOX_ML: i32 = 16;
     const BOX_MT: i32 = 16;
     const BOX_Y: i32 = BOX_MT;
@@ -83,18 +80,22 @@ fn draw_title_arrows(theme: &Theme, pressed: bool) {
         p.x += 1;
         p.y += 1;
     }
-    draw_triangle(
-        Point::new(p.x, p.y + 4),
-        Point::new(p.x + 4, p.y),
-        Point::new(p.x + 4, p.y + 8),
-        style,
-    );
+    if has_left {
+        draw_triangle(
+            Point::new(p.x, p.y + 4),
+            Point::new(p.x + 4, p.y),
+            Point::new(p.x + 4, p.y + 8),
+            style,
+        );
+    }
 
-    p.x += WIDTH - 2 * CURSOR_X - 3;
-    draw_triangle(
-        Point::new(p.x, p.y + 4),
-        Point::new(p.x - 4, p.y),
-        Point::new(p.x - 4, p.y + 8),
-        style,
-    );
+    if has_right {
+        p.x += WIDTH - 2 * CURSOR_X - 3;
+        draw_triangle(
+            Point::new(p.x, p.y + 4),
+            Point::new(p.x - 4, p.y),
+            Point::new(p.x - 4, p.y + 8),
+            style,
+        );
+    }
 }
