@@ -73,6 +73,7 @@ pub fn load_state() {
     unsafe { STATE.set(state) }.ok().unwrap();
 }
 
+/// Load all badges and scores for the given app.
 fn load_pages(author_id: &str, app_id: &str) -> Option<Vec<Page>> {
     let boards_path = alloc::format!("roms/{author_id}/{app_id}/_boards");
     let raw = sudo::load_file_buf(&boards_path)?;
@@ -105,6 +106,7 @@ fn load_pages(author_id: &str, app_id: &str) -> Option<Vec<Page>> {
     Some(pages)
 }
 
+/// Validate, format, sort, and truncate the given scores.
 fn get_scores(board: &firefly_types::Board, raw_scores: firefly_types::BoardScores) -> Vec<Score> {
     let mut scores = Vec::new();
     let peer = unsafe { Peer::from_u8(get_me().into_u8()) };
@@ -131,7 +133,7 @@ fn get_scores(board: &firefly_types::Board, raw_scores: firefly_types::BoardScor
     }
 
     let friend_names = load_friend_names();
-    let default_name = "anonymous";
+    const DEFAULT_NAME: &str = "anonymous";
     for friend in raw_scores.friends.iter() {
         let score = friend.score;
         if !valid_score(board, score) {
@@ -140,7 +142,7 @@ fn get_scores(board: &firefly_types::Board, raw_scores: firefly_types::BoardScor
         let friend_name = friend_names.get(usize::from(friend.index));
         let friend_name = match friend_name {
             Some(friend_name) => friend_name.clone(),
-            None => default_name.to_string(),
+            None => DEFAULT_NAME.to_string(),
         };
         scores.push(Score {
             name: friend_name.clone(),
@@ -155,6 +157,7 @@ fn get_scores(board: &firefly_types::Board, raw_scores: firefly_types::BoardScor
     scores
 }
 
+/// Sort pages by their position.
 fn sort_pages(pages: &mut [Page]) {
     let len = pages.len();
     if len <= 1 {
@@ -187,6 +190,10 @@ fn truncate_scores(scores: &mut Vec<Score>) {
         scores.truncate(8);
     }
 }
+
+/// Sort scores in descending order of their value.
+///
+/// Since the sort is stable, equal scores will show me before friends.
 fn sort_scores(scores: &mut [Score]) {
     let len = scores.len();
     if len <= 1 {
@@ -204,6 +211,7 @@ fn sort_scores(scores: &mut [Score]) {
     }
 }
 
+/// Load the list of names of all devices that ever connected to this one.
 fn load_friend_names() -> Vec<String> {
     let Some(raw) = sudo::load_file_buf("sys/friends") else {
         return Vec::new();
@@ -221,10 +229,12 @@ fn load_friend_names() -> Vec<String> {
     names
 }
 
+/// Check if the score is set and is in the valid range.
 const fn valid_score(board: &firefly_types::Board, score: i16) -> bool {
     score != 0 && score >= board.min && score <= board.max
 }
 
+/// Format the score value according to the board settings.
 fn format_score(board: &firefly_types::Board, score: i16) -> String {
     let val = score.unsigned_abs();
     // TODO: format decimal time.
