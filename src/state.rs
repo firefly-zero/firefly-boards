@@ -101,6 +101,7 @@ fn load_pages(author_id: &str, app_id: &str) -> Option<Vec<Page>> {
     if pages.is_empty() {
         return None;
     }
+    sort_pages(&mut pages);
     Some(pages)
 }
 
@@ -140,8 +141,47 @@ fn get_scores(board: &firefly_types::Board, raw_scores: firefly_types::BoardScor
             me: false,
         });
     }
+    sort_scores(&mut scores);
+
+    if scores.len() > 8 {
+        scores.truncate(8);
+    }
 
     scores
+}
+
+fn sort_pages(pages: &mut [Page]) {
+    let len = pages.len();
+    if len <= 1 {
+        return;
+    }
+    let mut sorted = false;
+    while !sorted {
+        sorted = true;
+        for i in 0..len - 1 {
+            if pages[i].position > pages[i + 1].position {
+                pages.swap(i, i + 1);
+                sorted = false;
+            }
+        }
+    }
+}
+
+fn sort_scores(scores: &mut [Score]) {
+    let len = scores.len();
+    if len <= 1 {
+        return;
+    }
+    let mut sorted = false;
+    while !sorted {
+        sorted = true;
+        for i in 0..len - 1 {
+            if scores[i].value < scores[i + 1].value {
+                scores.swap(i, i + 1);
+                sorted = false;
+            }
+        }
+    }
 }
 
 fn load_friend_names() -> Vec<String> {
