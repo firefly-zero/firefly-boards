@@ -54,6 +54,19 @@ extern "C" fn render() {
     let pressed = state.input.pressed();
     firefly_ui::draw_title(&page.name, pressed, &font, theme.accent);
     draw_title_arrows(&theme, pressed);
+
+    for (score, i) in page.scores.iter().zip(2..) {
+        let color = if score.me {
+            theme.accent
+        } else {
+            theme.primary
+        };
+        let mut point = Point::new(20, 12 + i * 13);
+        draw_text(&score.name, &font, point, color);
+
+        point.x = WIDTH - 20 - font.line_width_ascii(&score.formatted) as i32;
+        draw_text(&score.formatted, &font, point, color);
+    }
 }
 
 fn draw_title_arrows(theme: &Theme, pressed: bool) {

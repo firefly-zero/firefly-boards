@@ -1,5 +1,6 @@
 use crate::*;
 use alloc::{
+    str,
     string::{String, ToString},
     vec::Vec,
 };
@@ -17,10 +18,10 @@ pub struct Page {
 }
 
 pub struct Score {
-    name: String,
-    me: bool,
-    value: i16,
-    formatted: String,
+    pub name: String,
+    pub me: bool,
+    pub value: i16,
+    pub formatted: String,
 }
 
 pub struct State {
@@ -147,11 +148,15 @@ fn load_friend_names() -> Vec<String> {
     let Some(raw) = sudo::load_file_buf("sys/friends") else {
         return Vec::new();
     };
-    let raw = raw.into_vec();
-    let raw = unsafe { String::from_utf8_unchecked(raw) };
+    let mut raw = raw.into_vec();
+    let mut raw = &mut raw[..];
     let mut names = Vec::new();
-    for name in raw.split('\n') {
+    while !raw.is_empty() {
+        let size = usize::from(raw[0]);
+        let name_raw = &raw[1..=size];
+        let name = unsafe { str::from_utf8_unchecked(name_raw) };
         names.push(name.to_string());
+        raw = &mut raw[size + 1..];
     }
     names
 }
