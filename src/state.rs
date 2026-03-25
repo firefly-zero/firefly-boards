@@ -122,6 +122,14 @@ fn get_scores(board: &firefly_types::Board, raw_scores: firefly_types::BoardScor
             me: true,
         });
     }
+    // If the board doesn't have any scores from me, hide the board
+    // (even if it has scores from friends). This prevents us from showing scores
+    // for levels that the current player never played.
+    // Maybe it's a secret level. No spoilers!
+    if scores.is_empty() {
+        return scores;
+    }
+
     let friend_names = load_friend_names();
     let default_name = "anonymous";
     for friend in raw_scores.friends.iter() {
@@ -141,12 +149,9 @@ fn get_scores(board: &firefly_types::Board, raw_scores: firefly_types::BoardScor
             me: false,
         });
     }
+
     sort_scores(&mut scores);
-
-    if scores.len() > 8 {
-        scores.truncate(8);
-    }
-
+    truncate_scores(&mut scores);
     scores
 }
 
@@ -167,6 +172,21 @@ fn sort_pages(pages: &mut [Page]) {
     }
 }
 
+/// Make sure there are only 8 top scores and they include at least one of my scores.
+fn truncate_scores(scores: &mut Vec<Score>) {
+    if scores.len() > 8 {
+        let has_me = scores[..8].iter().any(|s| s.me);
+        if !has_me {
+            for (i, score) in scores.iter().enumerate() {
+                if score.me {
+                    scores.swap(7, i);
+                    break;
+                }
+            }
+        }
+        scores.truncate(8);
+    }
+}
 fn sort_scores(scores: &mut [Score]) {
     let len = scores.len();
     if len <= 1 {
