@@ -56,7 +56,7 @@ pub fn load_state() {
     if target.is_none() {
         log_error("failed to load target");
     } else if pages.is_none() {
-        log_error("app has no badges");
+        log_error("app has no boards with scores");
     }
     if pages.is_none() {
         quit();
@@ -73,7 +73,7 @@ pub fn load_state() {
     unsafe { STATE.set(state) }.ok().unwrap();
 }
 
-/// Load all badges and scores for the given app.
+/// Load all boards and scores for the given app.
 fn load_pages(author_id: &str, app_id: &str) -> Option<Vec<Page>> {
     let boards_path = alloc::format!("roms/{author_id}/{app_id}/_boards");
     let raw = sudo::load_file_buf(&boards_path)?;
