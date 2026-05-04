@@ -19,9 +19,7 @@ extern "C" fn update() {
     state.input.update();
     match state.input.get() {
         Input::Left => {
-            if state.page > 0 {
-                state.page -= 1;
-            }
+            state.page = state.page.saturating_sub(1);
         }
         Input::Right | Input::Select => {
             if let Some(pages) = &state.pages
