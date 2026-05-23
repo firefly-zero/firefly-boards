@@ -41,10 +41,10 @@ extern "C" fn render() {
     let Some(pages) = &state.pages else {
         return;
     };
-    let font = state.font.as_font();
+    let font = &state.font;
     let page = &pages[state.page];
     let pressed = state.input.pressed();
-    firefly_ui::draw_title(&page.name, pressed, &font, theme.accent);
+    firefly_ui::draw_title(&page.name, pressed, font, theme.accent);
 
     let has_left = state.page > 0;
     let has_right = state.page + 1 < pages.len();
@@ -57,10 +57,10 @@ extern "C" fn render() {
             theme.primary
         };
         let mut point = Point::new(20, 12 + i * 13);
-        draw_text(&score.name, &font, point, color);
+        draw_text(&score.name, font, point, color);
 
         point.x = WIDTH - 20 - font.line_width_ascii(&score.formatted) as i32;
-        draw_text(&score.formatted, &font, point, color);
+        draw_text(&score.formatted, font, point, color);
     }
 }
 

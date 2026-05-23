@@ -6,6 +6,7 @@ use alloc::{
 };
 use core::cell::OnceCell;
 use firefly_rust::*;
+use firefly_sudo::sudo;
 use firefly_types::Encode;
 use firefly_ui::InputManager;
 
@@ -26,7 +27,7 @@ pub struct Score {
 
 pub struct State {
     pub settings: Settings,
-    pub font: FileBuf,
+    pub font: FontBuf,
     pub input: InputManager,
     pub pages: Option<Vec<Page>>,
     pub page: usize,
@@ -64,7 +65,7 @@ pub fn load_state() {
 
     let state = State {
         settings: get_settings(peer),
-        font: load_file_buf("ascii").unwrap(),
+        font: load_file_buf("ascii").unwrap().into(),
         pages,
         input,
         page: 0,
@@ -77,11 +78,13 @@ pub fn load_state() {
 fn load_pages(author_id: &str, app_id: &str) -> Option<Vec<Page>> {
     let boards_path = alloc::format!("roms/{author_id}/{app_id}/_boards");
     let raw = sudo::load_file_buf(&boards_path)?;
-    let boards = firefly_types::Boards::decode(raw.as_bytes()).ok()?;
+    let raw = raw.into_bytes();
+    let boards = firefly_types::Boards::decode(&raw).ok()?;
 
     let stats_path = alloc::format!("data/{author_id}/{app_id}/stats");
     let raw = sudo::load_file_buf(&stats_path)?;
-    let stats = firefly_types::Stats::decode(raw.as_bytes()).ok()?;
+    let raw = raw.into_bytes();
+    let stats = firefly_types::Stats::decode(&raw).ok()?;
 
     if boards.boards.len() != stats.scores.len() {
         return None;
@@ -216,7 +219,7 @@ fn load_friend_names() -> Vec<String> {
     let Some(raw) = sudo::load_file_buf("sys/friends") else {
         return Vec::new();
     };
-    let mut raw = raw.into_vec();
+    let mut raw = raw.into_bytes();
     let mut raw = &mut raw[..];
     let mut names = Vec::new();
     while !raw.is_empty() {
@@ -274,7 +277,7 @@ fn reverse(parts: &mut [String]) {
 /// Read the ID of the app to be removed.
 fn load_target() -> Option<(String, String)> {
     let raw = load_file_buf("target")?;
-    let raw = raw.as_bytes();
+    let raw = &raw.into_bytes();
     let raw = raw.trim_ascii();
     let raw = alloc::str::from_utf8(raw).ok()?;
     let (author, app) = split_by(raw, '.')?;
